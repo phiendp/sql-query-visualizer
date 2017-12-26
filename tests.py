@@ -26,7 +26,7 @@ class QueryParserTests(unittest.TestCase):
         """
 
         result = self.parser.process(query)
-        expected = '{"name": "result", "children": [{"name": "user_orders", "children": ["orders"]}]}'
+        expected = '{"name": "result", "children": [{"name": "user_orders", "children": [{"name": "orders"}]}]}'
 
         assert result == expected
 
@@ -63,7 +63,7 @@ class QueryParserTests(unittest.TestCase):
         """
 
         result = self.parser.process(query)
-        expected = '{"name": "result", "children": [{"name": "daily_users", "children": ["users"]}, {"name": "daily_products", "children": ["products"]}, {"name": "daily_reviews", "children": ["reviews"]}]}'
+        expected = '{"name": "result", "children": [{"name": "daily_users", "children": [{"name": "users"}]}, {"name": "daily_products", "children": [{"name": "products"}]}, {"name": "daily_reviews", "children": [{"name": "reviews"}]}]}'
 
         assert result == expected
 

@@ -22,7 +22,7 @@ class Parser(object):
 
             rel_expression = cte.ctequery.fromClause
             for rel in rel_expression:
-                ctes[name]['children'].append(rel.relname.value)
+                ctes[name]['children'].append({"name": rel.relname.value})
 
             # target_list = cte.ctequery.targetList
             # self.update_target_list(target_list, name, ctes)

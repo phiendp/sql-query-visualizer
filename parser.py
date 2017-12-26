@@ -58,5 +58,6 @@ class Parser(object):
 
         rel_result = root[0].stmt.fromClause
         target_list = root[0].stmt.targetList
-        result = self.build_result_from(rel_result, target_list, ctes)
-        return json.dumps([result])
+
+        result = [self.build_result_from(rel_result, target_list, ctes)]
+        return json.dumps(result)

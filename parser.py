@@ -4,12 +4,12 @@ import json
 
 class Parser(object):
 
-    def update_target_list(self, target_list):
+    def generate_fields_from(self, target_list):
         fields = []
         for target in target_list:
             if target.val.node_tag == 'ColumnRef':
                 fields.append(target.val.fields[-1].str.value)
-            elif target.val.node_tag == 'FuncCall':
+            elif target.val.node_tag == 'FuncCall' or target.val.node_tag == 'TypeCast':
                 fields.append(target.name.value)
         return fields
 
@@ -25,7 +25,7 @@ class Parser(object):
                 ctes[name]['children'].append({"name": rel.relname.value})
 
             target_list = cte.ctequery.targetList
-            fields = self.update_target_list(target_list)
+            fields = self.generate_fields_from(target_list)
             ctes[name]['name'] = "{}: {}".format(name, ", ".join(fields))
         return ctes
 
@@ -40,8 +40,7 @@ class Parser(object):
             else:
                 result['children'].append(ctes[name])
 
-        fields = self.update_target_list(target_list)
-
+        fields = self.generate_fields_from(target_list)
         result['name'] = 'result: {}'.format(', '.join(fields))
 
         return result

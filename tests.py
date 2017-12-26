@@ -26,7 +26,7 @@ class QueryParserTests(unittest.TestCase):
         """
 
         result = self.parser.process(query)
-        expected = '[{"children": [{"children": [{"name": "orders"}], "name": "user_orders - user_id, order_count"}], "name": "result: order_count, num_users"}]'
+        expected = '[{"children": [{"children": [{"name": "orders"}], "name": "user_orders: user_id, order_count"}], "name": "result: order_count, num_users"}]'
 
         assert result == expected
 
@@ -63,7 +63,7 @@ class QueryParserTests(unittest.TestCase):
         """
 
         result = self.parser.process(query)
-        expected = '[{"children": [{"children": [{"name": "users"}], "name": "daily_users - new_users"}, {"children": [{"name": "products"}], "name": "daily_products - new_users"}, {"children": [{"name": "reviews"}], "name": "daily_reviews - new_users"}], "name": "result: date_d, new_users, new_products, new_reviews"}]'
+        expected = '[{"children": [{"children": [{"name": "users"}], "name": "daily_users: date_d, new_users"}, {"children": [{"name": "products"}], "name": "daily_products: date_d, new_users"}, {"children": [{"name": "reviews"}], "name": "daily_reviews: date_d, new_users"}], "name": "result: date_d, new_users, new_products, new_reviews"}]'
 
         assert result == expected
 

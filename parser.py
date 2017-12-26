@@ -4,35 +4,34 @@ import json
 
 class Parser(object):
 
-    def update_target_list(self, target_list, name, storage):
+    def update_target_list(self, target_list):
+        fields = []
         for target in target_list:
             if target.val.node_tag == 'ColumnRef':
-                storage[name]['fields'].append(target.val.fields[-1].str.value)
+                fields.append(target.val.fields[-1].str.value)
             elif target.val.node_tag == 'FuncCall':
-                storage[name]['fields'].append(target.name.value)
+                fields.append(target.name.value)
+        return fields
 
     def build_ctes_from(self, cte_expression):
         ctes = dict()
         for cte in cte_expression:
             name = cte.ctename.value
             ctes[name] = dict()
-            ctes[name]['name'] = name
             ctes[name]['children'] = []
-            # ctes[name]['fields'] = []
 
             rel_expression = cte.ctequery.fromClause
             for rel in rel_expression:
                 ctes[name]['children'].append({"name": rel.relname.value})
 
-            # target_list = cte.ctequery.targetList
-            # self.update_target_list(target_list, name, ctes)
+            target_list = cte.ctequery.targetList
+            fields = self.update_target_list(target_list)
+            ctes[name]['name'] = "{} - {}".format(name, ", ".join(fields))
         return ctes
 
     def build_result_from(self, rel_result, target_list, ctes):
         result = dict()
-        result['name'] = 'result'
         result['children'] = []
-        # result['fields'] = []
 
         for rel in rel_result:
             name = rel.relname.value
@@ -41,17 +40,14 @@ class Parser(object):
             else:
                 result['children'].append(ctes[name])
 
-        # for target in target_list:
-        #     if target.val.node_tag == 'ColumnRef':
-        #         result['fields'].append(target.val.fields[-1].str.value)
-        #     elif target.val.node_tag == 'FuncCall':
-        #         result['fields'].append(target.name.value)
+        fields = self.update_target_list(target_list)
+
+        result['name'] = 'result: {}'.format(', '.join(fields))
+
         return result
 
     def process(self, sql):
         root = Node(parse_sql(sql))
-        # for node in root.traverse():
-        #     print(node)
 
         cte_expression = root[0].stmt.withClause.ctes
         ctes = self.build_ctes_from(cte_expression)

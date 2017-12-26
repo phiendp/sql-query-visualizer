@@ -26,7 +26,7 @@ class Parser(object):
 
             target_list = cte.ctequery.targetList
             fields = self.update_target_list(target_list)
-            ctes[name]['name'] = "{} - {}".format(name, ", ".join(fields))
+            ctes[name]['name'] = "{}: {}".format(name, ", ".join(fields))
         return ctes
 
     def build_result_from(self, rel_result, target_list, ctes):

@@ -10,6 +10,17 @@
         max-width: 1000px;
       }
 
+      .node circle {
+        fill: #fff;
+        stroke: steelblue;
+        stroke-width: 3px;
+      }
+      .node text { font: 12px sans-serif; }
+      .link {
+        fill: none;
+        stroke: #ccc;
+        stroke-width: 2px;
+      }
     </style>
   </head>
 
@@ -32,22 +43,79 @@
           {% endfor %}
           <br>
         </div>
-
-        <div class="col-sm-5 col-sm-offset-1">
-          {% if results %}
-            <h2>Diagram</h2>
-            <br>
-            <div id="results">
-              {{ results }}
-            </div>
-
-          {% endif %}
-        </div>
       </div>
+
+      <div class="col-sm-5 col-sm-offset-1">
+        {% if results %}
+          <h2>Diagram</h2>
+          <br>
+          <div id="results">
+          </div>
+
+        {% endif %}
+      </div>
+
     </div>
     <br><br>
     <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+      var data = {{results | safe}}
+      // ************** Generate the tree diagram  *****************
+      var margin = {top: 20, right: 120, bottom: 20, left: 120},
+          width = 960 - margin.right - margin.left,
+          height = 500 - margin.top - margin.bottom;
+          
+      var i = 0;
+      var tree = d3.layout.tree()
+          .size([height, width]);
+      var diagonal = d3.svg.diagonal()
+          .projection(function(d) { return [d.y, d.x]; });
+      var svg = d3.select("#results").append("svg")
+          .attr("width", width + margin.right + margin.left)
+          .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      // load the external data
+      root = data[0];
+      update(root);
+
+      function update(source) {
+        var nodes = tree.nodes(root).reverse(),
+            links = tree.links(nodes);
+
+        nodes.forEach(function(d) { d.y = d.depth * 180; });
+
+        var node = svg.selectAll("g.node")
+            .data(nodes, function(d) { return d.id || (d.id = ++i); });
+
+        var nodeEnter = node.enter().append("g")
+            .attr("class", "node")
+            .attr("transform", function(d) { 
+                return "translate(" + d.y + "," + d.x + ")"; });
+        nodeEnter.append("circle")
+            .attr("r", 10)
+            .style("fill", "#fff");
+        nodeEnter.append("text")
+            .attr("x", function(d) { 
+                return d.children || d._children ? -13 : 13; })
+            .attr("dy", ".35em")
+            .attr("text-anchor", function(d) { 
+                return d.children || d._children ? "end" : "start"; })
+            .text(function(d) { return d.name; })
+            .style("fill-opacity", 1);
+
+        var link = svg.selectAll("path.link")
+            .data(links, function(d) { return d.target.id; });
+
+        link.enter().insert("path", "g")
+            .attr("class", "link")
+            .attr("d", diagonal);
+      }
+    </script>
 
   </body>
 </html>

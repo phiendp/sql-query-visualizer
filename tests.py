@@ -76,6 +76,40 @@ class QueryParserTests(unittest.TestCase):
         expected = '[{"children": [{"children": [{"name": "users: created_at"}], "name": "daily_users: date_d, new_users"}, {"children": [{"name": "products: created_at"}], "name": "daily_products: date_d, new_users"}, {"children": [{"name": "reviews: created_at"}], "name": "daily_reviews: date_d, new_users"}], "name": "result: date_d, new_users, new_products, new_reviews"}]'
         assert result == expected
 
+    def test_parse_multiple_cte_with_join(self):
+        query = """
+            with a as (
+              select a1 from users
+            ), b as (
+              select a1 as b1 from a
+            )
+            select
+              a.a1,
+              b.b1
+            from a
+            left join b on a.a1 = b.b1
+        """
+        result = self.parser.process(query)
+
+    def test_simple_joins_query(self):
+        query = """
+            SELECT
+              S.pid,
+              age(clock_timestamp(), query_start),
+              usename,
+              query,
+              L.mode,
+              L.locktype,
+              L.granted
+            FROM pg_stat_activity S
+            inner join pg_locks L on S.pid = L.pid
+            order by L.granted, L.pid DESC
+        """
+
+        result = self.parser.process(query)
+        expected = '[{"children": [{"name": "pg_stat_activity"}, {"name": "pg_locks"}], "name": "result: pid, age, usename, query, mode, locktype, granted"}]'
+        assert result == expected
+
 
 if __name__ == '__main__':
     unittest.main()

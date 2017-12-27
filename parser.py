@@ -1,4 +1,4 @@
-from pg_query import Node, parse_sql
+from pg_query import Node, Missing, parse_sql
 import json
 
 
@@ -12,9 +12,11 @@ class Parser(object):
         as its children
         """
         root = Node(parse_sql(sql))
+        ctes = dict()
 
-        cte_expression = root[0].stmt.withClause.ctes
-        ctes = self.build_ctes_from(cte_expression)
+        if root[0].stmt.withClause is not Missing:
+            cte_expression = root[0].stmt.withClause.ctes
+            ctes = self.build_ctes_from(cte_expression)
 
         relation_from_result = root[0].stmt.fromClause
         target_list_from_result = root[0].stmt.targetList
@@ -56,7 +58,7 @@ class Parser(object):
         for rel in relation_from_result:
             name = rel.relname.value
             if name not in ctes:
-                result['children'].append(name)
+                result['children'].append({"name": name})
             else:
                 result['children'].append(ctes[name])
 

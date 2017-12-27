@@ -7,6 +7,16 @@ class QueryParserTests(unittest.TestCase):
     def setUp(self):
         self.parser = Parser()
 
+    def test_parse_simple_select_query(self):
+        query = """
+            select a, b from users
+        """
+
+        result = self.parser.process(query)
+        expected = '[{"children": [{"name": "users"}], "name": "result: a, b"}]'
+
+        assert result == expected
+
     def test_parse_simple_query_with_one_cte(self):
         query = """
             WITH user_orders AS (

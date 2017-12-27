@@ -84,9 +84,6 @@
           .call(zm = d3.behavior.zoom().scaleExtent([1,3])).append("g")
           .attr("transform", "translate(" + 350 + "," + 20 + ")");
 
-      //necessary so that zoom knows where to zoom and unzoom from
-      zm.translate([350, 20]);
-
       root.x0 = 0;
       root.y0 = height / 2;
 

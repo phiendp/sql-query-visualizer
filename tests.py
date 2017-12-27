@@ -90,6 +90,8 @@ class QueryParserTests(unittest.TestCase):
             left join b on a.a1 = b.b1
         """
         result = self.parser.process(query)
+        expected = '[{"children": [{"name": "a"}, {"name": "b"}], "name": "result: a1, b1"}]'
+        assert result == expected
 
     def test_simple_joins_query(self):
         query = """
@@ -108,6 +110,53 @@ class QueryParserTests(unittest.TestCase):
 
         result = self.parser.process(query)
         expected = '[{"children": [{"name": "pg_stat_activity"}, {"name": "pg_locks"}], "name": "result: pid, age, usename, query, mode, locktype, granted"}]'
+        assert result == expected
+
+    def test_sub_queries(self):
+        query = """
+            select
+              S.date_d,
+              S.new_users,
+              R.renewals,
+              L.total_charged,
+              L.total_charging_attempts
+            from (
+                select
+                  date(S.created_at) AS date_d,
+                  count(distinct S.user_id) AS new_users
+                from tbl_subscribers S
+                where S.created_at >= '2017-12-20' -- {{ date_start }}
+                  and S.created_at < '2017-12-21' -- {{ date_end }}
+                  and S.is_subscribed = 1
+                group by 1
+            ) S, (
+                select
+                  date(R.created_at) AS date_d,
+                  count(distinct R.user_id) as renewals
+                from tbl_renewal R
+                where R.created_at >= '2017-12-20' -- {{ date_start }}
+                  and R.created_at < '2017-12-21' -- {{ date_end }}
+                  and R.status = 1
+                group by 1
+                order by 1 desc
+            ) R, (
+                select
+                  date(L.created_at) AS date_d,
+                  count(distinct (CASE when status_code_id=2 THEN L.user_id ELSE NULL END)) as total_charged,
+                  count(distinct L.user_id) as total_charging_attempts
+                from tbl_charging_logs L
+                where L.created_at >= '2017-12-20'
+                  and L.created_at < '2017-12-21'
+                group by 1
+                order by 1 desc
+            ) L
+            where S.date_d = R.date_d
+              and S.date_d = L.date_d
+            order by 1 desc
+        """
+
+        result = self.parser.process(query)
+        expected = '[{"children": [{"name": "tbl_subscribers: date_d,new_users"}, {"name": "tbl_renewal: date_d,renewals"}, {"name": "tbl_charging_logs: date_d,total_charged,total_charging_attempts"}], "name": "result: date_d, new_users, renewals, total_charged, total_charging_attempts"}]'
         assert result == expected
 
 

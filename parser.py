@@ -60,22 +60,37 @@ class Parser(object):
 
         for rel in from_clause:
             if rel.node_tag == 'JoinExpr':
-                left_arg = rel.larg.relname.value
-                right_arg = rel.rarg.relname.value
-                result['children'].append({"name": left_arg})
-                result['children'].append({"name": right_arg})
-                continue
-
-            name = rel.relname.value
-            if name not in ctes:
-                result['children'].append({"name": name})
+                self.handle_joins(result, rel)
+            elif rel.node_tag == 'RangeSubselect':
+                self.handle_subqueries(result, rel, ctes)
             else:
-                result['children'].append(ctes[name])
+                name = rel.relname.value
+                self.update_relation(result, ctes, name)
 
         fields = self.get_fields_from(target_list, for_outer=True)
         result['name'] = 'result: {}'.format(', '.join(fields))
 
         return result
+
+    def handle_joins(self, result, rel):
+        left_arg = rel.larg.relname.value
+        right_arg = rel.rarg.relname.value
+        result['children'].append({"name": left_arg})
+        result['children'].append({"name": right_arg})
+
+    def handle_subqueries(self, result, rel, ctes):
+        sub_query = rel.subquery
+        sub_from_clause = sub_query.fromClause[0]
+        sub_target_list = sub_query.targetList
+        sub_fields_name = ','.join(self.get_fields_from(sub_target_list, for_outer=True))
+        name = "{}: {}".format(sub_from_clause.relname.value, sub_fields_name)
+        self.update_relation(result, ctes, name)
+
+    def update_relation(self, result, ctes, name):
+        if name not in ctes:
+            result['children'].append({"name": name})
+        else:
+            result['children'].append(ctes[name])
 
     def get_fields_from(self, target_list, for_outer=False):
         """

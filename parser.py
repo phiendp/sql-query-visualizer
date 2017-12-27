@@ -12,9 +12,6 @@ class Parser(object):
         as its children
         """
         root = Node(parse_sql(sql))
-        # for node in root.traverse():
-        #     print(node)
-
         statement = root[0].stmt
 
         ctes = dict()
@@ -64,8 +61,7 @@ class Parser(object):
             elif rel.node_tag == 'RangeSubselect':
                 self.handle_subqueries(result, rel, ctes)
             else:
-                name = rel.relname.value
-                self.update_relation(result, ctes, name)
+                self.update_children_node(result, ctes, rel.relname.value)
 
         fields = self.get_fields_from(target_list, for_outer=True)
         result['name'] = 'result: {}'.format(', '.join(fields))
@@ -84,9 +80,9 @@ class Parser(object):
         sub_target_list = sub_query.targetList
         sub_fields_name = ','.join(self.get_fields_from(sub_target_list, for_outer=True))
         name = "{}: {}".format(sub_from_clause.relname.value, sub_fields_name)
-        self.update_relation(result, ctes, name)
+        self.update_children_node(result, ctes, name)
 
-    def update_relation(self, result, ctes, name):
+    def update_children_node(self, result, ctes, name):
         if name not in ctes:
             result['children'].append({"name": name})
         else:
